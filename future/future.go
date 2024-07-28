@@ -14,8 +14,8 @@ func (f *Future[T]) SetResult(result T) {
 	close(f.done)
 }
 
-func (f *Future[T]) Wait() {
-	<-f.done
+func (f *Future[T]) C() <-chan struct{} {
+	return f.done
 }
 
 func (f *Future[T]) WaitResult() T {

@@ -21,13 +21,11 @@ func TestStaticPool_Close(t *testing.T) {
 		p := StartNewStaticPool(context.Background(), 4)
 
 		total := atomic.Int32{}
-		go func() {
-			for i := 0; i < 10; i++ {
-				p.Submit(func(ctx context.Context) {
-					total.Add(1)
-				})
-			}
-		}()
+		for i := 0; i < 10; i++ {
+			p.Submit(func(ctx context.Context) {
+				total.Add(1)
+			})
+		}
 
 		wait := p.Close()
 		wait()
