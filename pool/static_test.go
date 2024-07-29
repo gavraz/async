@@ -8,7 +8,7 @@ import (
 )
 
 func TestStaticPool_Submit(t *testing.T) {
-	p := StartNewStaticPool(context.Background(), 1)
+	p := StartNewStatic(context.Background(), 1)
 	done := make(chan struct{})
 	p.Submit(func(ctx context.Context) {
 		close(done)
@@ -18,7 +18,7 @@ func TestStaticPool_Submit(t *testing.T) {
 
 func TestStaticPool_Close(t *testing.T) {
 	t.Run("closing and waiting should complete execution for all tasks", func(t *testing.T) {
-		p := StartNewStaticPool(context.Background(), 4)
+		p := StartNewStatic(context.Background(), 4)
 
 		total := atomic.Int32{}
 		for i := 0; i < 10; i++ {
@@ -33,7 +33,7 @@ func TestStaticPool_Close(t *testing.T) {
 	})
 
 	t.Run("submit after close should panic", func(t *testing.T) {
-		p := StartNewStaticPool(context.Background(), 4)
+		p := StartNewStatic(context.Background(), 4)
 		p.Close()
 		defer func() {
 			if r := recover(); r == nil {

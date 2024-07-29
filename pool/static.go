@@ -5,9 +5,9 @@ import (
 	"sync"
 )
 
-// StaticPool represents a static pool of workers.
+// Static represents a static pool of workers.
 // Users can submit new tasks to an available worker via Submit.
-type StaticPool struct {
+type Static struct {
 	size int
 
 	wg        sync.WaitGroup
@@ -15,22 +15,25 @@ type StaticPool struct {
 	cancelled <-chan struct{}
 }
 
-func StartNewStaticPool(ctx context.Context, size int) *StaticPool {
-	p := NewStaticPool(size)
-	p.Start(ctx)
-
-	return p
+func StartNewStatic(ctx context.Context, size int) *Static {
+	start := NewStaticStarter(size)
+	return start(ctx)
 }
 
-func NewStaticPool(size int) *StaticPool {
-	return &StaticPool{
+func NewStaticStarter(size int) (start func(ctx context.Context) *Static) {
+	s := &Static{
 		size:  size,
 		tasks: make(chan func(ctx context.Context)),
+	}
+
+	return func(ctx context.Context) *Static {
+		s.Start(ctx)
+		return s
 	}
 }
 
 // Start the workers in the pool (should be called only once).
-func (sp *StaticPool) Start(ctx context.Context) {
+func (sp *Static) Start(ctx context.Context) {
 	sp.cancelled = ctx.Done()
 	sp.wg.Add(sp.size)
 	for i := 0; i < sp.size; i++ {
@@ -40,7 +43,7 @@ func (sp *StaticPool) Start(ctx context.Context) {
 
 // Submit a new task to the worker pool. If a worker is available, it will handle the task immediately;
 // Otherwise, Submit will block until a worker becomes available.
-func (sp *StaticPool) Submit(task func(ctx context.Context)) {
+func (sp *Static) Submit(task func(ctx context.Context)) {
 	select {
 	case sp.tasks <- task:
 	case <-sp.cancelled:
@@ -50,12 +53,12 @@ func (sp *StaticPool) Submit(task func(ctx context.Context)) {
 // Close the pool.
 // Returns an optional wait function to wait for inflight tasks.
 // note: a call to Submit after Close will result in a panic.
-func (sp *StaticPool) Close() (wait func()) {
+func (sp *Static) Close() (wait func()) {
 	close(sp.tasks)
 	return sp.wg.Wait
 }
 
-func (sp *StaticPool) worker(ctx context.Context) {
+func (sp *Static) worker(ctx context.Context) {
 	defer sp.wg.Done()
 
 	for {
