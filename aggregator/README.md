@@ -42,11 +42,16 @@ func main() {
 	}
 
 	agg := aggregator.StartNew(ctx, conf)
-
+	
+	wg := sync.WaitGroup
 	for i := 0; i < 20; i++ {
-		go agg.OnEvent(i)
+		wg.Add(1)
+		go func(event int) {
+			agg.OnEvent(event)
+			wg.Done()
+		}(i)
 	}
-
-	fmt.Println("Queue length:", agg.QueueLen())
+	
+	wg.Wait()
 }
 ```

@@ -32,5 +32,4 @@ func main() {
 	wait()
 	fmt.Println("All tasks completed.")
 }
-
 ```

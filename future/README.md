@@ -20,7 +20,14 @@ func main() {
 		f.SetResult(42)
 	}()
 
-	<-f.C()  // Wait for the result to be set
+	go func() {
+		select {
+		case <-f.C(): 
+		// ...
+		}
+		fmt.Println("Done waiting for result")
+    }()
+	
 	fmt.Println("Result:", f.WaitResult())
 }
 
