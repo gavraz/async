@@ -21,7 +21,7 @@ func main() {
 
 	// Start a new static pool with 3 workers
 	p := pool.StartNewStatic(ctx, 3)
-	
+
 	for i := 0; i < 10; i++ {
 		n := i
 		p.Submit(func(ctx context.Context) {
@@ -30,7 +30,8 @@ func main() {
 	}
 
 	wait := p.Close()
-	wait()
+	wait() // optional: wait for all routines and tasks to complete
 	fmt.Println("All tasks completed.")
 }
+
 ```

@@ -22,12 +22,12 @@ func main() {
 
 	go func() {
 		select {
-		case <-f.C(): 
 		// ...
+		case <-f.C():
 		}
 		fmt.Println("Done waiting for result")
-    }()
-	
+	}()
+
 	fmt.Println("Result:", f.WaitResult())
 }
 
