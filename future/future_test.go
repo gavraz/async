@@ -51,5 +51,5 @@ func TestFutureConcurrency(t *testing.T) {
 
 	go f.SetResult(10)
 
-	<-f.C()
+	<-f.Done()
 }

@@ -5,8 +5,9 @@ import (
 	"sync"
 )
 
-// Static represents a static pool of workers.
-// Users can submit new tasks to an available worker via Submit.
+// Static represents a pool of workers with a fixed size.
+// Tasks can be submitted using Submit which will block until a worker is available.
+// The pool can be closed using Close or canceled by the ctx.
 type Static struct {
 	size int
 
