@@ -5,6 +5,7 @@ A static pool of workers designed for handling tasks concurrently. The worker ro
 pool is closed, making it suitable for continuous work. Submitting a task after the pool has been closed is not allowed.
 However, if the context has been cancelled, any subsequent submissions will be ignored and return immediately.
 
+### Example
 ```go
 package main
 
