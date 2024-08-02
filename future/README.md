@@ -2,12 +2,13 @@
 
 A Future is a basic primitive for managing future results of any type. The result can be set once but retrieved multiple times.
 
+## Example 
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/yourusername/future"
+	"github.com/gavraz/future"
 	"time"
 )
 
