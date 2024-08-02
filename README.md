@@ -1,8 +1,8 @@
 # Async
 
-The `async` package provides simple primitives for async work.
+The `async` package provides simple, and user-friendly primitives for async work.
 
 ## Components
 - [Aggregator](aggregator)
-- [Future](future/README.md)
-- [Static Pool](pool/README.md)
+- [Future](future)
+- [Static Pool](pool)
