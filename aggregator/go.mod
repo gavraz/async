@@ -1,4 +1,4 @@
-module github.com/gavraz/aggregator
+module github.com/gavraz/async/aggregator
 
 go 1.22
 

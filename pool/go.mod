@@ -1,4 +1,4 @@
-module github.com/gavraz/pool
+module github.com/gavraz/async/pool
 
 go 1.22
 
