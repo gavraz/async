@@ -1,4 +1,4 @@
-module pool
+module github.com/gavraz/pool
 
 go 1.22
 
