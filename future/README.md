@@ -8,27 +8,34 @@ package main
 
 import (
 	"fmt"
-	"github.com/gavraz/future"
+	"github.com/gavraz/async/future"
 	"time"
 )
 
-func main() {
-	f := future.New[int]()
+func makePromise() *future.Future[int] {
+	p := future.NewPromise[int]()
 
 	go func() {
 		time.Sleep(2 * time.Second)
-		f.SetResult(42)
+		p.Set(42)
 	}()
+
+	return p.Future()
+}
+
+func main() {
+	f := makePromise()
 
 	go func() {
 		select {
 		// ...
-		case <-f.C():
+		case <-f.Done():
 		}
 		fmt.Println("Done waiting for result")
 	}()
 
-	fmt.Println("Result:", f.WaitResult())
+	fmt.Println("Result:", f.Value())
 }
+
 
 ```
