@@ -1,32 +1,43 @@
 package future
 
-// Future allows a value to be set asynchronously.
-// The value can be set only once using SetResult, but it can be retrieved multiple times using WaitResult.
-// Callers may use Done to wait in a select statement.
-type Future[T any] struct {
+// Promise is used to commit for value.
+// The promised value can be set using Set and be retrieved using Future.
+type Promise[T any] struct {
 	done   chan struct{}
 	result T
 }
 
-func New[T any]() *Future[T] {
-	return &Future[T]{done: make(chan struct{})}
+func NewPromise[T any]() *Promise[T] {
+	return &Promise[T]{done: make(chan struct{})}
 }
 
-// SetResult assigns a value to the future and makes it available to waiting routines.
+// Set assigns a value to the future and makes it available to waiting routines.
 // The result can be set only once.
-func (f *Future[T]) SetResult(result T) {
-	f.result = result
-	close(f.done)
+func (p *Promise[T]) Set(result T) {
+	p.result = result
+	close(p.done)
 }
 
-// Done is a channel used in select statements to wait until the result is available.
+func (p *Promise[T]) Future() *Future[T] {
+	return &Future[T]{
+		p: p,
+	}
+}
+
+// Future is used to wait for a value that may be available in the future.
+// Callers may use Done to wait in a select statement.
+type Future[T any] struct {
+	p *Promise[T]
+}
+
+// Done is a channel used in select statements to wait until the value is available.
 func (f *Future[T]) Done() <-chan struct{} {
-	return f.done
+	return f.p.done
 }
 
-// WaitResult blocks until the result is set and then returns it.
+// Value blocks until the value is set and then returns it.
 // If the result is already set, it returns immediately.
-func (f *Future[T]) WaitResult() T {
-	<-f.done
-	return f.result
+func (f *Future[T]) Value() T {
+	<-f.p.done
+	return f.p.result
 }

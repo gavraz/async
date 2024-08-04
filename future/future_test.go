@@ -4,52 +4,68 @@ import (
 	"testing"
 )
 
-func TestFuture(t *testing.T) {
-	t.Run("WaitResult returns the correct result", func(t *testing.T) {
-		f := New[int]()
-		f.SetResult(42)
-		result := f.WaitResult()
+func Test_PromiseFuture(t *testing.T) {
+	t.Run("Setting the value before retrieving the future returns the promised value", func(t *testing.T) {
+		p := NewPromise[int]()
+		p.Set(42)
+		result := p.Future().Value()
 		if result != 42 {
 			t.Errorf("Expected result to be 42, got %d", result)
 		}
 	})
 
-	t.Run("Wait blocks until SetResult is called", func(t *testing.T) {
-		f := New[int]()
-		f.SetResult(99)
-		select {
-		case <-f.done:
-			// Expected behavior
-		default:
-			t.Error("Wait should unblock after SetResult is called")
+	t.Run("Setting the value after retrieving the future returns the promised value", func(t *testing.T) {
+		p := NewPromise[int]()
+		f := p.Future()
+		p.Set(42)
+		result := f.Value()
+		if result != 42 {
+			t.Errorf("Expected result to be 42, got %d", result)
 		}
 	})
 
-	t.Run("SetResult can only set the result once", func(t *testing.T) {
-		future := New[int]()
-		future.SetResult(1)
+	t.Run("Done blocks until the value is set", func(t *testing.T) {
+		p := NewPromise[int]()
+		f := p.Future()
+		select {
+		case <-f.Done():
+			t.Error("done should block until value is set")
+		default:
+		}
+
+		p.Set(99)
+		select {
+		case <-f.Done():
+		default:
+			t.Error("done should unblock after the value is set")
+		}
+	})
+
+	t.Run("The value can be set only once", func(t *testing.T) {
+		p := NewPromise[int]()
+		p.Set(1)
 		defer func() {
 			if r := recover(); r == nil {
 				t.Error("second call to SetResult did not panic")
 			}
 		}()
-		future.SetResult(2)
+		p.Set(2)
 	})
 }
 
 func TestFutureConcurrency(t *testing.T) {
-	f := New[int]()
-
+	p := NewPromise[int]()
+	f := p.Future()
 	for i := 0; i < 100; i++ {
 		go func() {
-			result := f.WaitResult()
+			result := f.Value()
 			if result != 10 {
 				t.Logf("Got result: %d", result)
 			}
 		}()
 	}
 
-	go f.SetResult(10)
+	go p.Set(10)
 
 	<-f.Done()
 }
