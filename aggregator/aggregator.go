@@ -55,8 +55,8 @@ func startNew[T any](ctx context.Context, conf Config[T], clock quartz.Clock) *A
 
 // NewStarter initiates an aggregator and returns a starter function to start and get the aggregator.
 func NewStarter[T any](conf Config[T], clock quartz.Clock) (start func(ctx context.Context) *Aggregator[T]) {
-	if conf.MaxDuration == 0 {
-		panic("bad config: max duration cannot be zero")
+	if err := conf.Validate(); err != nil {
+		panic("invalid aggregator configuration: " + err.Error())
 	}
 
 	a := &Aggregator[T]{
