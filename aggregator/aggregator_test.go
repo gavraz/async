@@ -2,18 +2,19 @@ package aggregator
 
 import (
 	"context"
-	"github.com/coder/quartz"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/coder/quartz"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAggregator_NewStarter(t *testing.T) {
 	starter := NewStarter[int](Config[int]{
-		MaxDuration: DisableTimeLimit,
-		MaxCount:    ImmediateDelivery,
+		MaxDuration:       DisableTimeLimit,
+		MaxBufferedEvents: ImmediateDelivery,
 	}, quartz.NewMock(t))
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -47,8 +48,8 @@ func TestAggregator_OnEvent(t *testing.T) {
 	clock := quartz.NewMock(t)
 	total := 0
 	a := startNew[int](ctx, Config[int]{
-		MaxDuration: time.Nanosecond,
-		MaxCount:    3,
+		MaxDuration:       time.Nanosecond,
+		MaxBufferedEvents: 3,
 		Handler: func(events []int) {
 			total += len(events)
 			actionComplete <- struct{}{}
@@ -124,8 +125,8 @@ func TestAggregator_OnEvent(t *testing.T) {
 	t.Run("reaching the max buffer size should invoke the on buffer full callback", func(t *testing.T) {
 		called := false
 		a := startNew[int](ctx, Config[int]{
-			MaxDuration: DisableTimeLimit,
-			MaxCount:    ImmediateDelivery,
+			MaxDuration:       DisableTimeLimit,
+			MaxBufferedEvents: ImmediateDelivery,
 			Handler: func(events []int) {
 				total += len(events)
 				actionComplete <- struct{}{}
@@ -151,8 +152,8 @@ func TestAggregator_OnEventEdgeCases(t *testing.T) {
 		total := 0
 		actionComplete := make(chan struct{})
 		a := startNew[int](context.Background(), Config[int]{
-			MaxDuration: DisableTimeLimit,
-			MaxCount:    ImmediateDelivery,
+			MaxDuration:       DisableTimeLimit,
+			MaxBufferedEvents: ImmediateDelivery,
 			Handler: func(events []int) {
 				total += len(events)
 				actionComplete <- struct{}{}
@@ -168,8 +169,8 @@ func TestAggregator_OnEventEdgeCases(t *testing.T) {
 
 	t.Run("if configured with max count 0 events then the events should be buffered indefinitely", func(t *testing.T) {
 		a := startNew[int](context.Background(), Config[int]{
-			MaxDuration: time.Nanosecond,
-			MaxCount:    DisableCountLimit,
+			MaxDuration:       time.Nanosecond,
+			MaxBufferedEvents: DisableCountLimit,
 			Handler: func(events []int) {
 				t.Fatalf("unexpected execution of action")
 			},
@@ -191,8 +192,8 @@ func TestAggregator_OnEventEdgeCases(t *testing.T) {
 		actionComplete := make(chan struct{})
 		clock := quartz.NewMock(t)
 		a := startNew[int](ctx, Config[int]{
-			MaxDuration: time.Second,
-			MaxCount:    10,
+			MaxDuration:       time.Second,
+			MaxBufferedEvents: 10,
 			Handler: func(events []int) {
 				total += len(events)
 				actionComplete <- struct{}{}
@@ -232,8 +233,8 @@ func TestAggregator_OnEventEdgeCases(t *testing.T) {
 		actionComplete := make(chan struct{})
 		clock := quartz.NewMock(t)
 		a := startNew[int](ctx, Config[int]{
-			MaxDuration: time.Second,
-			MaxCount:    2,
+			MaxDuration:       time.Second,
+			MaxBufferedEvents: 2,
 			Handler: func(events []int) {
 				total += len(events)
 				actionComplete <- struct{}{}
@@ -285,8 +286,8 @@ func TestAggregator_OnEventEdgeCases(t *testing.T) {
 
 func TestAggregator_consumeUnsafe(t *testing.T) {
 	a := startNew[int](context.Background(), Config[int]{
-		MaxDuration: time.Second,
-		MaxCount:    5,
+		MaxDuration:       time.Second,
+		MaxBufferedEvents: 5,
 	}, quartz.NewMock(t))
 
 	expectedCap := cap(a.bufferedEvents)
@@ -306,8 +307,8 @@ func TestAggregator_stress(t *testing.T) {
 
 	received := 0
 	a := StartNew[int](ctx, Config[int]{
-		MaxDuration: 1 * time.Second,
-		MaxCount:    11,
+		MaxDuration:       1 * time.Second,
+		MaxBufferedEvents: 11,
 		Handler: func(events []int) {
 			received += len(events)
 		},
