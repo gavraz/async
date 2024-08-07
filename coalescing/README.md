@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func printHello() {
+func printHello(_ context.Context) {
 	fmt.Println("Hello")
 	time.Sleep(2 * time.Second)
 }
