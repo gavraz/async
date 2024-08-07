@@ -1,6 +1,8 @@
 module github.com/gavraz/async/aggregator
 
-go 1.22
+go 1.21.8
+
+toolchain go1.22.5
 
 require (
 	github.com/coder/quartz v0.1.0

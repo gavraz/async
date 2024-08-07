@@ -1,6 +1,6 @@
 module github.com/gavraz/async/pool
 
-go 1.22
+go 1.17
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
