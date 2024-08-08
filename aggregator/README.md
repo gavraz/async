@@ -7,7 +7,7 @@ It supports configuring a non-blocking behavior and may be combined with a stati
 
 ### Configuration
 - `MaxDuration`: Maximum duration for an event to wait for delivery.
-- `MaxCount`: Maximum number of events to be buffered.
+- `MaxBufferedEvents`: Maximum number of events to be buffered.
 - `Handler`: Callback function for handling aggregated events.
 - `QueueSize`: Maximum number of aggregations that can be queued for handling.
 - `OnQueueFull`: Optional callback function to be called when the queue is full.
@@ -31,7 +31,7 @@ func main() {
 
 	conf := aggregator.Config[int]{
 		MaxDuration: 5 * time.Second,
-		MaxCount:    10,
+		MaxBufferedEvents:    10,
 		Handler: func(events []int) {
 			fmt.Println("Handling events:", events)
 		},

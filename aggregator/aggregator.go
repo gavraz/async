@@ -2,17 +2,18 @@ package aggregator
 
 import (
 	"context"
-	"github.com/coder/quartz"
 	"sync"
 	"time"
+
+	"github.com/coder/quartz"
 )
 
 const (
 	// DisableTimeLimit can be passed as Config.MaxDuration to disable the time limit.
 	DisableTimeLimit = maxDuration
-	// DisableCountLimit can be passed as Config.MaxCount to disable the count limit.
+	// DisableCountLimit can be passed as Config.MaxBufferedEvents to disable the count limit.
 	DisableCountLimit = 0
-	// ImmediateDelivery can be passed as Config.MaxCount along with DisableTimeLimit to enable immediate delivery.
+	// ImmediateDelivery can be passed as Config.MaxBufferedEvents along with DisableTimeLimit to enable immediate delivery.
 	ImmediateDelivery = 1
 
 	// Why do we set the ticker to the maximum duration?
@@ -22,25 +23,9 @@ const (
 	maxDuration = time.Duration(1<<63 - 1)
 )
 
-type Config[T any] struct {
-	// MaxDuration is the max duration for an event to wait for delivery.
-	// This limit can be disabled using DisableTimeLimit.
-	MaxDuration time.Duration
-	// MaxCount is the max number of events to be buffered.
-	// This limit can be disabled using DisableCountLimit.
-	// A value of indicates no limit on buffering while a limit of 1 indicates immediate event delivery.
-	MaxCount int
-	// Handler is the callback for handling aggregated events.
-	Handler func(events []T)
-	// QueueSize represents max number of aggregations that can be queued for handling.
-	QueueSize int
-	// OnQueueFull is an optional callback to be called when the queue is full.
-	OnQueueFull func(events []T)
-}
-
 // Aggregator is used to aggregate events of any type.
 // Events are accumulated until either the time limit specified by Config.MaxDuration
-// or the count limit specified by Config.MaxCount is reached.
+// or the count limit specified by Config.MaxBufferedEvents is reached.
 // When a limit is reached, the events are processed using the handler defined in Config.Handler.
 // To ensure non-blocking handling of events, Config.QueueSize can be set, which is useful if
 // event handling can be slower than event generation. Optionally, a Config.OnQueueFull callback
@@ -70,15 +55,15 @@ func startNew[T any](ctx context.Context, conf Config[T], clock quartz.Clock) *A
 
 // NewStarter initiates an aggregator and returns a starter function to start and get the aggregator.
 func NewStarter[T any](conf Config[T], clock quartz.Clock) (start func(ctx context.Context) *Aggregator[T]) {
-	if conf.MaxDuration == 0 {
-		panic("bad config: max duration cannot be zero")
+	if err := conf.Validate(); err != nil {
+		panic("invalid aggregator configuration: " + err.Error())
 	}
 
 	a := &Aggregator[T]{
 		conf:            conf,
 		clock:           clock,
 		pendingHandling: make(chan []T, conf.QueueSize),
-		bufferedEvents:  make([]T, 0, conf.MaxCount),
+		bufferedEvents:  make([]T, 0, conf.MaxBufferedEvents),
 		ticker:          clock.NewTicker(maxDuration),
 	}
 
@@ -119,7 +104,7 @@ func (a *Aggregator[T]) OnEvent(event T) {
 	a.mu.Lock()
 	wasEmpty := len(a.bufferedEvents) == 0
 	a.bufferedEvents = append(a.bufferedEvents, event)
-	if a.conf.MaxCount > 0 && len(a.bufferedEvents) >= a.conf.MaxCount {
+	if a.conf.MaxBufferedEvents > 0 && len(a.bufferedEvents) >= a.conf.MaxBufferedEvents {
 		consumedEvents = a.consumeUnsafe()
 	}
 	notEmpty := len(a.bufferedEvents) > 0
@@ -142,7 +127,7 @@ func (a *Aggregator[T]) QueueLen() int {
 
 func (a *Aggregator[T]) consumeUnsafe() []T {
 	consumed := a.bufferedEvents
-	a.bufferedEvents = make([]T, 0, a.conf.MaxCount)
+	a.bufferedEvents = make([]T, 0, a.conf.MaxBufferedEvents)
 	return consumed
 }
 
