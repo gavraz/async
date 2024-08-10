@@ -20,7 +20,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/gavraz/aggregator"
+	"github.com/gavraz/async/aggregator"
 	"sync"
 	"time"
 )
@@ -43,16 +43,17 @@ func main() {
 
 	agg := aggregator.StartNew(ctx, conf)
 
-	wg := sync.WaitGroup{}
 	for i := 0; i < 20; i++ {
-		wg.Add(1)
 		go func(event int) {
 			agg.OnEvent(event)
-			wg.Done()
 		}(i)
 	}
 
-	wg.Wait()
+	time.Sleep(time.Second)
+
+	// output:
+	// Handling events: [2 1 3 4 5 6 0 8 7 9]
+	// Handling events: [19 10 11 12 13 14 15 16 17 18]
 }
 
 ```
