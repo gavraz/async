@@ -35,7 +35,10 @@ func main() {
 	}()
 
 	fmt.Println("Result:", f.Value())
-}
 
+	// output:
+	// Done waiting for result
+	// Result: 42
+}
 
 ```
