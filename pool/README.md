@@ -12,7 +12,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/gavraz/pool"
+	"github.com/gavraz/async/pool"
 )
 
 func main() {
@@ -32,6 +32,19 @@ func main() {
 	wait := p.Close()
 	wait() // optional: wait for all routines and tasks to complete
 	fmt.Println("All tasks completed.")
+
+	// output:
+	//	Task 0 is being processed
+	//	Task 3 is being processed
+	//	Task 4 is being processed
+	//	Task 5 is being processed
+	//	Task 6 is being processed
+	//	Task 7 is being processed
+	//	Task 8 is being processed
+	//	Task 9 is being processed
+	//	Task 1 is being processed
+	//	Task 2 is being processed
+	//	All tasks completed.
 }
 
 ```
