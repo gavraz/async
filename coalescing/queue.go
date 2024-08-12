@@ -22,6 +22,21 @@ type queue struct {
 func (q *queue) start(ctx context.Context) {
 	for {
 		select {
+		// Could there be a deadlock on q.nextJob?
+		//
+		// The state machine flow is detailed in diagram.svg.
+		// States:
+		//	1. Empty - both q.current and q.next are nil
+		//	2. Current only - q.current is not nil, but q.next is nil
+		//	3. Full - both q.current and q.next are not nil
+		// Each state specifies the length of the channel.
+		// Operations:
+		//	1. enqueue - a call to q.enqueue
+		//	2. handle - executing the code segment under the lock while handling a job
+		//	3. runtime - represents scheduling by Go's runtime
+		//
+		// Since all state transitions involving a lock correspond to a channel length of zero,
+		// we can infer that there is no deadlock.
 		case j := <-q.nextJob:
 			q.fn(j.ctx)
 			close(j.done)
