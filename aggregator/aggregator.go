@@ -74,17 +74,20 @@ func NewStarter[T any](conf Config[T], clock quartz.Clock) (start func(ctx conte
 		panic("bad config: max duration cannot be zero")
 	}
 
-	a := &Aggregator[T]{
+	a := newAggregator(conf, clock)
+	return func(ctx context.Context) *Aggregator[T] {
+		a.start(ctx)
+		return a
+	}
+}
+
+func newAggregator[T any](conf Config[T], clock quartz.Clock) *Aggregator[T] {
+	return &Aggregator[T]{
 		conf:            conf,
 		clock:           clock,
 		pendingHandling: make(chan []T, conf.QueueSize),
 		bufferedEvents:  make([]T, 0, conf.MaxCount),
 		ticker:          clock.NewTicker(maxDuration),
-	}
-
-	return func(ctx context.Context) *Aggregator[T] {
-		a.start(ctx)
-		return a
 	}
 }
 

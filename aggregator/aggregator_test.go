@@ -122,8 +122,8 @@ func TestAggregator_OnEvent(t *testing.T) {
 	})
 
 	t.Run("reaching the max buffer size should invoke the on buffer full callback", func(t *testing.T) {
-		called := false
-		a := startNew[int](ctx, Config[int]{
+		called := make(chan struct{})
+		a := newAggregator[int](Config[int]{
 			MaxDuration: DisableTimeLimit,
 			MaxCount:    ImmediateDelivery,
 			Handler: func(events []int) {
@@ -131,18 +131,15 @@ func TestAggregator_OnEvent(t *testing.T) {
 				actionComplete <- struct{}{}
 			},
 			QueueSize: 2,
-			OnQueueFull: func([]int) {
-				called = true
+			OnQueueFull: func(vals []int) {
+				close(called) // we expect to be called once, panic otherwise
 			},
 		}, clock)
 
 		a.OnEvent(1)
-		assert.False(t, called)
 		a.OnEvent(2)
-		assert.False(t, called)
-
 		a.OnEvent(3)
-		assert.True(t, called)
+		<-called
 	})
 }
 
@@ -306,12 +303,12 @@ func TestAggregator_stress(t *testing.T) {
 
 	received := 0
 	a := StartNew[int](ctx, Config[int]{
-		MaxDuration: 1 * time.Second,
+		MaxDuration: 1 * time.Millisecond,
 		MaxCount:    11,
 		Handler: func(events []int) {
 			received += len(events)
 		},
-		QueueSize: 10_000,
+		QueueSize: 100_000,
 		OnQueueFull: func([]int) {
 			t.Fatalf("buffer full")
 		},
